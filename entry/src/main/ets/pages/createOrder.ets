@@ -1,6 +1,11 @@
 import schedule from '../component/schedule'
-import { getCompanion, return_companion_type } from '../api/api'
-import { CustomDialogDate } from '../component/dialog'
+import { getCompanion, return_companion_type, addOrder } from '../api/api'
+import { CustomDialogDate, CustomDialogCode } from '../component/dialog'
+import { router } from '@kit.ArkUI'
+
+interface params {
+  id: number
+}
 
 interface obj_list {
   hospital_name: string,
@@ -36,7 +41,10 @@ struct CreateOrder {
   }
   @State text_dialog_type: string = 'hospital_name'
   @State rangeList: Array<Array<string | number>> = []
-  @State form_list: form_list_type = {
+  @State ruleTip: boolean = false
+  @State code: string = ""
+  @State select: number = 0
+  @State @Watch('changeForm') form_list: form_list_type = {
     hospital_name: "请选择医院",
     hospital_id: undefined,
     starttime: undefined,
@@ -56,6 +64,7 @@ struct CreateOrder {
       },
       type_title: this.text_dialog_type,
       rangeList: this.rangeList,
+      select: this.select
     }),
     offset: { dx: 0, dy: 200 }
   })
@@ -66,6 +75,21 @@ struct CreateOrder {
       confirm: (time: Date) => {
         this.dateConfirmData(time)
       },
+    }),
+    offset: { dx: 0, dy: 200 }
+  })
+  CodeDialogController: CustomDialogController | null = new CustomDialogController({
+    builder: CustomDialogCode({
+      cancel: () => {
+      },
+      confirm: () => {
+        router.back({
+          url: 'pages/Index',
+          params: { index: 1 }
+        })
+        this.CodeDialogController?.close()
+      },
+      code: this.code
     }),
     offset: { dx: 0, dy: 200 }
   })
@@ -80,6 +104,10 @@ struct CreateOrder {
     }
 
     this.TextDialogController?.close()
+  }
+
+  changeForm() {
+    this.ruleTip = false
   }
 
   formaDate(time: Date) {
@@ -98,13 +126,20 @@ struct CreateOrder {
   openDialog(name: string) {
     if (name === 'hospital_name') {
       this.text_dialog_type = name
-      this.rangeList = this.orderData?.hospitals.map(item => {
+      this.rangeList = this.orderData?.hospitals.map((item, index) => {
+        if (item.id === this.form_list.hospital_id) {
+          this.select = index
+        }
         return [item.name, item.id]
       }) || []
+
       this.TextDialogController?.open()
     } else if (name === 'companion_name') {
       this.text_dialog_type = name
-      this.rangeList = this.orderData?.companion.map(item => {
+      this.rangeList = this.orderData?.companion.map((item, index) => {
+        if (item.id === this.form_list.companion_id) {
+          this.select = index
+        }
         return [item.name, item.id]
       }) || []
       this.TextDialogController?.open()
@@ -114,9 +149,37 @@ struct CreateOrder {
 
   }
 
+  submit() {
+    let itemArr = ["hospital_id", "companion_id", "starttime", "demand", "hospital_name", "receiveAddress", "tel"]
+    for (const element of itemArr) {
+      if (!Reflect.get(this.form_list, element)) {
+        this.ruleTip = true
+        return
+      }
+    }
+    addOrder({
+      hospital_name: this.form_list.hospital_name,
+      starttime: this.form_list.starttime as number,
+      receiveAddress: this.form_list.receiveAddress,
+      tel: this.form_list.tel,
+      demand: this.form_list.demand,
+      hospital_id: this.form_list.hospital_id as number,
+      companion_id: this.form_list.companion_id as number
+    }).then(res => {
+      this.code = res.wx_code
+      this.CodeDialogController?.open()
+    })
+  }
+
   onPageShow(): void {
     getCompanion().then(res => {
       this.orderData = res
+      let id = (router.getParams() as params).id
+      let item = this.orderData.hospitals.find(value => {
+        return value.id === id
+      })
+      this.form_list.hospital_name = item?.name || ""
+      this.form_list.hospital_id = id
     })
   }
 
@@ -180,12 +243,16 @@ struct CreateOrder {
           // console.log("+++form", JSON.stringify(this.form_list))
         })
 
+      if (this.ruleTip) {
+        Text('请确认医院，就诊时间，陪诊师都选择了!!!').fontSize(15).fontColor(Color.Red).margin(5)
+      }
+
       Button('提交订单', { type: ButtonType.Normal })
         .borderRadius(5)
         .width('100%')
         .margin({ top: 10 })
         .onClick(() => {
-
+          this.submit()
         })
 
     }.backgroundColor('#f0f0f0')

@@ -1,5 +1,6 @@
 import { it } from '@ohos/hypium'
 import { getHomeData, return_home_type, slides, nav2s, hospitals } from '../api/api'
+import { router } from '@kit.ArkUI'
 
 @Component
 struct home {
@@ -56,6 +57,14 @@ struct home {
             offsetY: 1,
             radius: 6,
             color: "#66000000"
+          })
+          .onClick(() => {
+            router.pushUrl({
+              url: 'pages/createOrder',
+              params:{
+                id:item.id
+              }
+            })
           })
         })
 
