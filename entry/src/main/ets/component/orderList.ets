@@ -1,5 +1,6 @@
 import { getOrderList, return_order_type } from '../api/api'
 import counter from './counter'
+import { router } from '@kit.ArkUI'
 
 @Component
 struct orderList {
@@ -49,10 +50,19 @@ struct orderList {
                 })
               }
             }.margin({ top: 5, right: 5 })
-          }.margin(5)
+          }
+          .margin(5)
           .backgroundColor(Color.White)
           .borderRadius(2)
           .padding(5)
+          .onClick(() => {
+            router.pushUrl({
+              url: 'pages/orderDetail',
+              params: {
+                oid:item.out_trade_no
+              }
+            })
+          })
         })
         Text('没有更多了').margin({ bottom: 50 }).width('100%')
           .textAlign(TextAlign.Center)
