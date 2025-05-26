@@ -1,6 +1,8 @@
 import { router } from '@kit.ArkUI'
 import { getDetail, return_detail_type } from '../api/api'
+import counter from '../component/counter'
 import schedule from '../component/schedule'
+import { CustomDialogCode } from '../component/dialog'
 
 interface params {
   oid: string
@@ -10,6 +12,20 @@ interface params {
 @Component
 struct OrderDetail {
   @State order_data: return_detail_type | undefined = undefined
+  @State allSeconds: number = 0
+  @State code: string = ""
+  CodeDialogController: CustomDialogController | null = new CustomDialogController({
+    builder: CustomDialogCode({
+      cancel: () => {
+      },
+      confirm: () => {
+        this.getDetailData((router.getParams() as params).oid)
+        this.CodeDialogController?.close()
+      },
+      code: this.code
+    }),
+    offset: { dx: 0, dy: 200 }
+  })
   appointment_from: Record<string, string> = {
     "service_name": "预约服务",
     "hospital_name": "就诊医院",
@@ -32,8 +48,16 @@ struct OrderDetail {
     if ((router.getParams() as params).oid) {
       oid = (router.getParams() as params).oid
     }
+    this.getDetailData(oid)
+  }
+
+  getDetailData(oid: string) {
     getDetail({ oid }).then(res => {
       this.order_data = res
+      if (res.trade_state === '待支付') {
+        this.allSeconds = res.order_start_time + 7200000 - Date.now()
+        this.code = res.code_url
+      }
     })
   }
 
@@ -87,6 +111,48 @@ struct OrderDetail {
         schedule({
           typeIndex: this.getTypeIndex()
         })
+        if (this.order_data?.trade_state === "已取消") {
+          Column() {
+            Text("订单已取消").fontWeight(FontWeight.Bold).fontSize(18).fontColor("#ff7a7a7a").lineHeight(25)
+            Text("期待下次为您服务，如需帮助可咨询客服").fontColor("#ff7a7a7a")
+          }.alignItems(HorizontalAlign.Start).margin(15)
+        } else if (this.order_data?.trade_state === "待服务") {
+          Column() {
+            Text("正在为您安排服务专员...")
+              .fontWeight(FontWeight.Bold)
+              .fontSize(18)
+              .fontColor("#ff7a7a7a")
+              .lineHeight(25)
+            Text("请保持手机畅通，稍后将有服务专员与您联系").fontColor("#ff7a7a7a")
+          }.alignItems(HorizontalAlign.Start).margin(15)
+        } else if (this.order_data?.trade_state === "已完成") {
+          Column() {
+            Text("服务已完成").fontWeight(FontWeight.Bold).fontSize(18).fontColor("#ff7a7a7a").lineHeight(25)
+            Text("感谢您的使用，如有售后问题请联系客服").fontColor("#ff7a7a7a")
+          }.alignItems(HorizontalAlign.Start).margin(15)
+        } else if (this.order_data?.trade_state === "待支付") {
+          Column() {
+            Text("订单待支付").fontWeight(FontWeight.Bold).fontSize(18).fontColor("#ff7a7a7a").lineHeight(25)
+            Row() {
+              Text("请在").fontColor("#ff7a7a7a")
+              counter({ allSeconds: this.allSeconds })
+              Text("内完成支付,超时订单自动取消").fontColor("#ff7a7a7a")
+            }
+
+            Column() {
+              Button(`立即支付${this.order_data.price}元`, { type: ButtonType.Normal, stateEffect: true })
+                .borderRadius(5)
+                .fontSize(20)
+                .fontWeight(FontWeight.Bold)
+                .backgroundColor("#07c160")
+                .width("70%")
+                .onClick(() => {
+                  this.CodeDialogController?.open()
+                })
+            }.width("100%").padding(5)
+
+          }.alignItems(HorizontalAlign.Start).margin(15).width("100%")
+        }
         Column() {
           Text('预约信息')
             .fontWeight(FontWeight.Bold)
@@ -123,9 +189,9 @@ struct OrderDetail {
             })
           }
         }.alignItems(HorizontalAlign.Start)
-        .backgroundColor(Color.White).padding(10)
+        .backgroundColor(Color.White).padding(10).margin({ top: 10 })
 
-      }.backgroundColor('#f0f0f0').height('100%')
+      }.backgroundColor('#f0f0f0')
     }
   }
 }
