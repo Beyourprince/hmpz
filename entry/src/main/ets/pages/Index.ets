@@ -1,6 +1,7 @@
 import home from './home'
 import { router } from '@kit.ArkUI'
 import orders from './orders'
+import my from './my'
 
 interface params {
   index: number
@@ -25,7 +26,7 @@ struct Index {
   }
 
   build() {
-    Tabs({ index: 1, barPosition: BarPosition.End, controller: this.TabsController }) {
+    Tabs({ index: 2, barPosition: BarPosition.End, controller: this.TabsController }) {
       TabContent() {
         home()
       }.tabBar(
@@ -33,12 +34,13 @@ struct Index {
       )
 
       TabContent() {
-        orders({changeFlag:this.changeFlag}).height('100%')
+        orders({ changeFlag: this.changeFlag }).height('100%')
       }.tabBar(
         '订单'
       )
 
       TabContent() {
+        my().height('100%')
       }.tabBar(
         '我的'
       )
