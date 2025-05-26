@@ -2,6 +2,8 @@ import { userInfo } from '../api/api'
 
 @Component
 struct my {
+  changeOrderTab: (index: number, type: string) => void = () => {
+  }
   @State userInfo: userInfo | undefined = {
     'avatar': 'http://159.75.169.224:5500/avatar.jpeg',
     "name": 'admin'
@@ -29,13 +31,19 @@ struct my {
           Text('全部').fontSize(13).fontColor('#999')
         }.border({ width: { bottom: 1 }, color: '#ffebedf0' })
         .padding(5)
+        .onClick(() => {
+          this.changeOrderTab(1, '全部')
+        })
 
         Flex({ justifyContent: FlexAlign.SpaceAround }) {
           ForEach(Object.keys(this.server_list), (item: string) => {
             Column() {
               Image($r(item)).width(50)
               Text(this.server_list[item]).fontSize(13).fontColor('#999')
-            }
+            }.onClick(() => {
+
+              this.changeOrderTab(1, this.server_list[item])
+            })
           })
         }.margin(5)
       }
