@@ -10,12 +10,18 @@ interface params {
 @Component
 struct Index {
   TabsController: TabsController = new TabsController()
+  @State changeFlag: boolean = true
 
   onPageShow(): void {
     if (router.getParams()) {
       let index = (router.getParams() as params).index
       this.TabsController.changeIndex(index)
     }
+    this.changeFlag = true
+  }
+
+  onPageHide(): void {
+    this.changeFlag = false
   }
 
   build() {
@@ -27,7 +33,7 @@ struct Index {
       )
 
       TabContent() {
-        orders().height('100%')
+        orders({changeFlag:this.changeFlag}).height('100%')
       }.tabBar(
         '订单'
       )
