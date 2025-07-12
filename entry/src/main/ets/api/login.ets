@@ -7,7 +7,7 @@ export  interface userInfo{
   avatar:string,
   name:string
 }
-interface login_type{
+export interface login_type{
   passWord:string,
   userName:string
 }

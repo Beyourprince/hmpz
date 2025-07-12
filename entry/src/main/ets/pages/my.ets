@@ -1,4 +1,5 @@
 import { userInfo } from '../api/api'
+import { router } from '@kit.ArkUI'
 
 @Component
 struct my {
@@ -13,6 +14,23 @@ struct my {
     "app.media.od_20": "待服务",
     "app.media.od_30": "已完成",
     "app.media.od_40": "已取消",
+  }
+
+  ButtonDialogController: CustomDialogController | null = new CustomDialogController({
+    builder: CustomDialogButton({
+      cancel: () => {
+      },
+      confirm: () => {
+        this.logOut()
+        this.ButtonDialogController?.close()
+      },
+    }),
+    offset: { dx: 0, dy: 200 }
+  })
+  logOut(){
+    router.replaceUrl({
+      url:'pages/LoginPage'
+    })
   }
 
   build() {
@@ -77,11 +95,47 @@ struct my {
         .backgroundColor(Color.Red)
         .margin({ top: 10 })
         .onClick(() => {
+          this.ButtonDialogController?.open()
         })
 
     }.backgroundColor('#f0f0f0')
     .height('100%')
     .padding(10)
+  }
+}
+@CustomDialog
+export struct CustomDialogButton {
+  controller?: CustomDialogController;
+  cancel: () => void = () => {
+  }
+  confirm: () => void = () => {
+  }
+  code: string = ""
+  build() {
+    Column() {
+      Text('是否确认退出')
+        .fontSize(15)
+        .fontWeight(FontWeight.Bold)
+        .margin(10)
+        .border({ width: { bottom: 1 } })
+        .textAlign(TextAlign.Center)
+        .width('100%')
+        .padding({ bottom: 5 })
+        .borderColor('#999')
+
+      Flex({justifyContent:FlexAlign.SpaceBetween}){
+        Button('确认退出',{type:ButtonType.Normal}).backgroundColor('#ff0839ec')
+          .borderRadius(5).onClick(()=>{
+            this.confirm()
+        })
+        Button('我不退出',{type:ButtonType.Normal})
+          .backgroundColor('#ffee1111')
+          .borderRadius(5)
+          .onClick(()=>{
+            this.controller?.close()
+          })
+      }.margin(10)
+    }
   }
 }
 
