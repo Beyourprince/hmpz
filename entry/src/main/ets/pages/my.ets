@@ -1,21 +1,18 @@
 import { userInfo } from '../api/api'
 import { router } from '@kit.ArkUI'
+import preferences from '../utils/preferences'
 
 @Component
 struct my {
   changeOrderTab: (index: number, type: string) => void = () => {
   }
-  @State userInfo: userInfo | undefined = {
-    'avatar': 'http://159.75.169.224:5500/avatar.jpeg',
-    "name": 'admin'
-  }
+  @State userInfo: userInfo | undefined = undefined
   server_list: Record<string, string> = {
     "app.media.od_10": "待支付",
     "app.media.od_20": "待服务",
     "app.media.od_30": "已完成",
     "app.media.od_40": "已取消",
   }
-
   ButtonDialogController: CustomDialogController | null = new CustomDialogController({
     builder: CustomDialogButton({
       cancel: () => {
@@ -27,9 +24,16 @@ struct my {
     }),
     offset: { dx: 0, dy: 200 }
   })
-  logOut(){
+
+  async aboutToAppear() {
+    this.userInfo = JSON.parse(await preferences.get('userInfo', '') as string)
+  }
+
+  async logOut() {
+    await preferences.delete('token')
+    await preferences.delete('userInfo')
     router.replaceUrl({
-      url:'pages/LoginPage'
+      url: 'pages/LoginPage'
     })
   }
 
@@ -103,6 +107,7 @@ struct my {
     .padding(10)
   }
 }
+
 @CustomDialog
 export struct CustomDialogButton {
   controller?: CustomDialogController;
@@ -111,6 +116,7 @@ export struct CustomDialogButton {
   confirm: () => void = () => {
   }
   code: string = ""
+
   build() {
     Column() {
       Text('是否确认退出')
@@ -123,15 +129,15 @@ export struct CustomDialogButton {
         .padding({ bottom: 5 })
         .borderColor('#999')
 
-      Flex({justifyContent:FlexAlign.SpaceBetween}){
-        Button('确认退出',{type:ButtonType.Normal}).backgroundColor('#ff0839ec')
-          .borderRadius(5).onClick(()=>{
-            this.confirm()
+      Flex({ justifyContent: FlexAlign.SpaceBetween }) {
+        Button('确认退出', { type: ButtonType.Normal }).backgroundColor('#ff0839ec')
+          .borderRadius(5).onClick(() => {
+          this.confirm()
         })
-        Button('我不退出',{type:ButtonType.Normal})
+        Button('我不退出', { type: ButtonType.Normal })
           .backgroundColor('#ffee1111')
           .borderRadius(5)
-          .onClick(()=>{
+          .onClick(() => {
             this.controller?.close()
           })
       }.margin(10)

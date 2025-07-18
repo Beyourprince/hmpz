@@ -1,4 +1,6 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from '@ohos/axios'
+import preferences from './../utils/preferences'
+import { router } from '@kit.ArkUI'
 
 export interface option_type {
   method?: string
@@ -18,8 +20,8 @@ let request = axios.create({
   baseURL: 'http://159.75.169.224:3321/v3pz',
   headers: { Terminal: "h5" }
 })
-request.interceptors.request.use((req: InternalAxiosRequestConfig) => {
-  req.headers['h-token'] = "0a2e342ed30c4feec6decb18c2fc0b9e"
+request.interceptors.request.use(async (req: InternalAxiosRequestConfig) => {
+  req.headers['h-token'] = await preferences.get('token', '')
   return req
 })
 
@@ -41,7 +43,11 @@ export default async function test<T>(options: option_type): Promise<T> {
 
   if (code === 10000) {
     return res.data as T
+    console.log('res', res.data)
   } else if (code === -2 && res.message === "token错误") {
+    router.replaceUrl({
+      url: 'pages/LoginPage'
+    })
     throw new Error(res.message)
   } else {
     throw new Error(res.message)
